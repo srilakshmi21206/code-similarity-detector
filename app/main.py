@@ -1,8 +1,11 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from app.similarity.comparator import compute_similarity
+from app.routes.upload import router as upload_router
 
 app = FastAPI(title="Code Similarity Detector")
+
+app.include_router(upload_router)
 
 
 class CompareRequest(BaseModel):
