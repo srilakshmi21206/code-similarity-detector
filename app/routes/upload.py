@@ -3,6 +3,7 @@ import io
 from itertools import combinations
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from app.similarity.comparator import compute_similarity
+from app.database import get_db, Comparison
 
 router = APIRouter()
 
@@ -12,7 +13,6 @@ MAX_ZIP_SIZE = 5 * 1024 * 1024   # 5MB for zip
 
 @router.post("/upload-compare")
 async def upload_compare(file1: UploadFile = File(...), file2: UploadFile = File(...)):
-    # Validate file extensions
     if not file1.filename.endswith(".py"):
         raise HTTPException(status_code=400, detail=f"{file1.filename} is not a Python file")
     if not file2.filename.endswith(".py"):
@@ -21,13 +21,11 @@ async def upload_compare(file1: UploadFile = File(...), file2: UploadFile = File
     content1 = await file1.read()
     content2 = await file2.read()
 
-    # File size validation
     if len(content1) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail=f"{file1.filename} exceeds 1MB limit")
     if len(content2) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail=f"{file2.filename} exceeds 1MB limit")
 
-    # Empty file check
     if len(content1) == 0:
         raise HTTPException(status_code=400, detail=f"{file1.filename} is empty")
     if len(content2) == 0:
@@ -47,6 +45,20 @@ async def upload_compare(file1: UploadFile = File(...), file2: UploadFile = File
     if "error" in result:
         raise HTTPException(status_code=400, detail=f"Syntax error in code: {result['error']}")
 
+    # Save to database
+    db = next(get_db())
+    comparison = Comparison(
+        file1=file1.filename,
+        file2=file2.filename,
+        string_similarity=result["string_similarity"],
+        token_similarity=result["token_similarity"],
+        combined_score=result["combined_score"],
+        flagged=str(result["combined_score"] >= 80).lower()
+    )
+    db.add(comparison)
+    db.commit()
+    db.close()
+
     return {
         "file1": file1.filename,
         "file2": file2.filename,
@@ -56,7 +68,6 @@ async def upload_compare(file1: UploadFile = File(...), file2: UploadFile = File
 
 @router.post("/batch-compare")
 async def batch_compare(zip_file: UploadFile = File(...), threshold: float = 80.0):
-    # Validate threshold range
     if not 0 <= threshold <= 100:
         raise HTTPException(status_code=400, detail="Threshold must be between 0 and 100")
 
@@ -65,7 +76,6 @@ async def batch_compare(zip_file: UploadFile = File(...), threshold: float = 80.
 
     content = await zip_file.read()
 
-    # Zip size validation
     if len(content) > MAX_ZIP_SIZE:
         raise HTTPException(status_code=400, detail="ZIP file exceeds 5MB limit")
 
@@ -75,7 +85,6 @@ async def batch_compare(zip_file: UploadFile = File(...), threshold: float = 80.
     try:
         zip_bytes = io.BytesIO(content)
         with zipfile.ZipFile(zip_bytes) as z:
-            # Security check — prevent zip slip attack
             for name in z.namelist():
                 if name.startswith("/") or ".." in name:
                     raise HTTPException(status_code=400, detail="Invalid file path in ZIP")
@@ -87,14 +96,11 @@ async def batch_compare(zip_file: UploadFile = File(...), threshold: float = 80.
 
             if len(py_files) == 0:
                 raise HTTPException(status_code=400, detail="No Python files found in ZIP")
-
             if len(py_files) < 2:
                 raise HTTPException(status_code=400, detail="ZIP must contain at least 2 Python files")
-
             if len(py_files) > 20:
                 raise HTTPException(status_code=400, detail="ZIP contains too many files — maximum 20 Python files allowed")
 
-            # Read all file contents
             sources = {}
             skipped = []
             for name in py_files:
@@ -118,7 +124,6 @@ async def batch_compare(zip_file: UploadFile = File(...), threshold: float = 80.
     if len(sources) < 2:
         raise HTTPException(status_code=400, detail="Not enough valid Python files to compare")
 
-    # Pairwise comparison
     results = []
     filenames = list(sources.keys())
     syntax_errors = []
