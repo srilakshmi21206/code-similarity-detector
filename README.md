@@ -104,7 +104,10 @@ Visit `http://localhost:3000` for the UI, `http://localhost:8000/docs` for the A
 | student4.py | student1.py | 65.45% | ✅ OK |
 
 ---
-
+## 🌐 Live Demo
+- **Frontend:** https://code-similarity-detector-six.vercel.app
+- **API:** https://code-similarity-detector.onrender.com
+- **API Docs:** https://code-similarity-detector.onrender.com/docs
 ## 🔮 Future Improvements
 
 - Support for multiple languages via `tree-sitter`
