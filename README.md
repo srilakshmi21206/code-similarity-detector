@@ -123,3 +123,10 @@ These are intentional simplifications for a lightweight tool rather than a produ
 - Database layer to store past comparisons
 - Active learning loop — user corrections improve accuracy
 - GitHub scanning mode — check against public repos
+---
+
+## 👤 Author
+
+**SRILAKSHMI.K**
+- GitHub: [@srilakshmi21206](https://github.com/srilakshmi21206)
+- LinkedIn: [lakshmisri02](https://linkedin.com/in/lakshmisri02)
