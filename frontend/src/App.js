@@ -2,6 +2,22 @@ import { useState } from "react";
 
 const API = "https://code-similarity-detector.onrender.com";
 
+function Spinner() {
+  return (
+    <div style={{
+      display: "inline-block",
+      width: 20,
+      height: 20,
+      border: "3px solid #e5e7eb",
+      borderTop: "3px solid #2563eb",
+      borderRadius: "50%",
+      animation: "spin 0.8s linear infinite",
+      marginRight: 8,
+      verticalAlign: "middle"
+    }} />
+  );
+}
+
 function App() {
   const [tab, setTab] = useState("compare");
 
@@ -15,7 +31,8 @@ function App() {
           onClick={() => setTab("compare")}
           style={{
             padding: "10px 20px", cursor: "pointer", borderRadius: 6, border: "none",
-            background: tab === "compare" ? "#2563eb" : "#e5e7eb", color: tab === "compare" ? "white" : "black"
+            background: tab === "compare" ? "#2563eb" : "#e5e7eb",
+            color: tab === "compare" ? "white" : "black"
           }}>
           Compare Two Files
         </button>
@@ -23,7 +40,8 @@ function App() {
           onClick={() => setTab("batch")}
           style={{
             padding: "10px 20px", cursor: "pointer", borderRadius: 6, border: "none",
-            background: tab === "batch" ? "#2563eb" : "#e5e7eb", color: tab === "batch" ? "white" : "black"
+            background: tab === "batch" ? "#2563eb" : "#e5e7eb",
+            color: tab === "batch" ? "white" : "black"
           }}>
           Batch Compare (ZIP)
         </button>
@@ -81,7 +99,7 @@ function CompareTab() {
         onClick={handleCompare}
         disabled={loading}
         style={{ padding: "10px 24px", background: "#2563eb", color: "white", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 16 }}>
-        {loading ? "Analyzing..." : "Compare"}
+        {loading ? <><Spinner />Analyzing...</> : "Compare"}
       </button>
 
       {error && <p style={{ color: "red", marginTop: 16 }}>Error: {error}</p>}
@@ -153,7 +171,7 @@ function BatchTab() {
         onClick={handleBatch}
         disabled={loading}
         style={{ padding: "10px 24px", background: "#2563eb", color: "white", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 16 }}>
-        {loading ? "Analyzing..." : "Run Batch Analysis"}
+        {loading ? <><Spinner />Analyzing...</> : "Run Batch Analysis"}
       </button>
 
       {error && <p style={{ color: "red", marginTop: 16 }}>Error: {error}</p>}
