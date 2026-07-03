@@ -153,3 +153,45 @@ async def batch_compare(zip_file: UploadFile = File(...), threshold: float = 80.
         "skipped_files": skipped,
         "syntax_errors": syntax_errors
     }
+@router.post("/multilang-compare")
+async def multilang_compare(file1: UploadFile = File(...), file2: UploadFile = File(...)):
+    """
+    Compare two code files of any supported language (Python, Java, C++).
+    Both files must be the same language.
+    """
+    from app.parser.multi_lang_parser import get_language, compute_multilang_similarity
+
+    lang1 = get_language(file1.filename)
+    lang2 = get_language(file2.filename)
+
+    if not lang1:
+        raise HTTPException(status_code=400, detail=f"Unsupported file type: {file1.filename}. Supported: .py, .java, .cpp")
+    if not lang2:
+        raise HTTPException(status_code=400, detail=f"Unsupported file type: {file2.filename}. Supported: .py, .java, .cpp")
+    if lang1 != lang2:
+        raise HTTPException(status_code=400, detail=f"Files must be the same language — got {lang1} and {lang2}")
+
+    content1 = await file1.read()
+    content2 = await file2.read()
+
+    if len(content1) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail=f"{file1.filename} exceeds 1MB limit")
+    if len(content2) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail=f"{file2.filename} exceeds 1MB limit")
+
+    try:
+        source1 = content1.decode("utf-8")
+        source2 = content2.decode("utf-8")
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="Could not decode file")
+
+    result = compute_multilang_similarity(source1, source2, lang1)
+
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+
+    return {
+        "file1": file1.filename,
+        "file2": file2.filename,
+        **result
+    }
