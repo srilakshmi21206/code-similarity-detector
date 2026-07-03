@@ -1,9 +1,16 @@
 import ast
+import builtins
+
+BUILTIN_NAMES = set(dir(builtins))
 
 class Normalizer(ast.NodeTransformer):
     """
     Walks the AST and replaces variable/function names with generic placeholders
     so that renaming variables doesn't defeat similarity detection.
+
+    Built-in names (print, len, range, etc.) are left untouched, since
+    anonymizing them would make code that calls different built-ins look
+    more similar than it actually is.
     """
     def __init__(self):
         self.name_map = {}
@@ -16,6 +23,8 @@ class Normalizer(ast.NodeTransformer):
         return self.name_map[original_name]
 
     def visit_Name(self, node):
+        if node.id in BUILTIN_NAMES:
+            return node
         node.id = self._get_placeholder(node.id)
         return node
 
