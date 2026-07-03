@@ -9,7 +9,10 @@ app = FastAPI(title="Code Similarity Detector")
 # Allow React frontend to talk to FastAPI backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+    "http://localhost:3000",
+    "https://code-similarity-detector-six.vercel.app",
+],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
