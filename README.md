@@ -142,10 +142,12 @@ Visit `http://localhost:3000` for the UI, `http://localhost:8000/docs` for the A
 
 ## 🔮 Future Improvements
 
-- GitHub scanning mode — check submissions against public repos
-- Active learning loop — user corrections improve accuracy
-- PostgreSQL for persistent production storage
-- JavaScript/TypeScript support via tree-sitter
+- **AI-powered explanations** — integrate an LLM (Claude/Groq) to explain *why* two files are similar in natural language, suggest how to rewrite flagged code, and summarize key differences
+- **GitHub scanning mode** — check student submissions against public GitHub repositories to detect copied code from the internet
+- **Active learning loop** — user corrections improve future scoring accuracy
+- **PostgreSQL** — replace SQLite with PostgreSQL for persistent production storage that survives redeployment
+- **JavaScript/TypeScript support** — extend tree-sitter integration to support frontend code comparison
+- **Rate limiting + authentication** — add API keys and request limits for production use
 
 ---
 
