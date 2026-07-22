@@ -45,9 +45,18 @@ function App() {
           }}>
           Batch Compare (ZIP)
         </button>
+        <button
+          onClick={() => setTab("history")}
+          style={{
+            padding: "10px 20px", cursor: "pointer", borderRadius: 6, border: "none",
+            background: tab === "history" ? "#2563eb" : "#e5e7eb",
+            color: tab === "history" ? "white" : "black"
+          }}>
+          History
+        </button>
       </div>
 
-      {tab === "compare" ? <CompareTab /> : <BatchTab />}
+      {tab === "compare" ? <CompareTab /> : tab === "batch" ? <BatchTab /> : <HistoryTab />}
     </div>
   );
 }
@@ -216,6 +225,78 @@ function BatchTab() {
             </tbody>
           </table>
         </div>
+      )}
+    </div>
+  );
+}
+
+function HistoryTab() {
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchHistory = async () => {
+    setLoading(true); setError(null);
+    try {
+      const res = await fetch(`${API}/history?limit=20`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail);
+      setHistory(data.comparisons);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const scoreColor = (score) => score >= 80 ? "#dc2626" : score >= 50 ? "#f59e0b" : "#16a34a";
+
+  return (
+    <div>
+      <h2>Comparison History</h2>
+      <p style={{ color: "#666" }}>Last 20 comparisons stored in the database</p>
+
+      <button
+        onClick={fetchHistory}
+        disabled={loading}
+        style={{ padding: "10px 24px", background: "#2563eb", color: "white", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 16, marginBottom: 24 }}>
+        {loading ? <><Spinner />Loading...</> : "Load History"}
+      </button>
+
+      {error && <p style={{ color: "red" }}>Error: {error}</p>}
+
+      {history.length > 0 && (
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ background: "#f3f4f6" }}>
+              {["#", "File 1", "File 2", "String %", "Token %", "Combined %", "Status", "Date"].map(h => (
+                <th key={h} style={{ padding: "10px 12px", textAlign: "left", border: "1px solid #e5e7eb", fontSize: 14 }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {history.map((r) => (
+              <tr key={r.id} style={{ background: r.flagged === "true" ? "#fef2f2" : "white" }}>
+                <td style={{ padding: "10px 12px", border: "1px solid #e5e7eb", fontSize: 14 }}>{r.id}</td>
+                <td style={{ padding: "10px 12px", border: "1px solid #e5e7eb", fontSize: 14 }}>{r.file1}</td>
+                <td style={{ padding: "10px 12px", border: "1px solid #e5e7eb", fontSize: 14 }}>{r.file2}</td>
+                <td style={{ padding: "10px 12px", border: "1px solid #e5e7eb", fontSize: 14, color: scoreColor(r.string_similarity) }}>{r.string_similarity}%</td>
+                <td style={{ padding: "10px 12px", border: "1px solid #e5e7eb", fontSize: 14, color: scoreColor(r.token_similarity) }}>{r.token_similarity}%</td>
+                <td style={{ padding: "10px 12px", border: "1px solid #e5e7eb", fontSize: 14, fontWeight: "bold", color: scoreColor(r.combined_score) }}>{r.combined_score}%</td>
+                <td style={{ padding: "10px 12px", border: "1px solid #e5e7eb", fontSize: 14 }}>
+                  {r.flagged === "true" ? "🚨 Flagged" : "✅ OK"}
+                </td>
+                <td style={{ padding: "10px 12px", border: "1px solid #e5e7eb", fontSize: 12, color: "#666" }}>
+                  {new Date(r.created_at).toLocaleDateString()}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {history.length === 0 && !loading && !error && (
+        <p style={{ color: "#666", marginTop: 20 }}>Click "Load History" to see past comparisons.</p>
       )}
     </div>
   );
